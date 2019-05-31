@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/reset.css">
+    <script type="text/javascript" src="../js/3d/three.min.js"></script>
+    <script type="text/javascript" src="../js/3d/OrbitControls.js"></script>
+    <!-- <script type="text/javascript" src="../js/mianyang.js"></script> -->
+    <script type="text/javascript" src="../js/3d/MTLLoader.js"></script>
+    <script type="text/javascript" src="../js/3d/OBJLoader.js"></script>
+    <!-- <script type="text/javascript" src="../js/3d/OBJLoader2.js"></script>
+    <script type="text/javascript" src="../js/3d/LoaderSupport.js"></script> -->
+    <script type="text/javascript" src="../js/3d/Stats.js"></script>
+    <script type="text/javascript" src="../js/3d/tween.min.js"></script>
+    <script type="text/javascript" src="../js/3d/DragControls.js"></script>
+    <script type="text/javascript" src="../js/3d/TransformControls.js"></script>
+    <script type="text/javascript" src="./data.js"></script> 
+</head>
+<body onload="load()"> 
+    <div class="t-top"></div>
+    <div class="t-left"></div>
+    <div class="t-right">
+        <div id="stats" style="position:absolute;right:0;top:0;"></div>
+        <canvas id="mainCanvas" width="1600px" height="800px"></canvas>
+    </div>
+    <script>
+        var scene,renderer,camera,line
+        function load(){
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,1,10000);
+            camera.position.set(1000,200,500);
+            camera.lookAt(0,0,0);
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('mainCanvas'),
+                antialias: true,//抗锯齿             
+                autoClear: true
+            });
+            renderer.setSize(window.innerWidth,window.innerHeight);
+            document.body.appendChild( renderer.domElement );
+            var material = new THREE.LineBasicMaterial({
+                color: 0x0000ff
+            });
+
+            var geometry = new THREE.Geometry();
+            geometry.vertices.push(
+                new THREE.Vector3( -60, 0, 0 ),
+                // new THREE.Vector3( 0, 10, 0 ),
+                new THREE.Vector3( 50, 0, 0 )
+            );
+
+            line = new THREE.Line( geometry, material );
+            scene.add(line);
+            scene.add(camera);
+            animate();
+        }
+        function animate() {
+            requestAnimationFrame( animate );
+            renderer.render( scene, camera );
+        }
+       
+    </script>
+</body>

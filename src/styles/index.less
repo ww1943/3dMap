@@ -1,0 +1,63 @@
+#app{
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    width: 1920px;
+    height: 1080px;
+}
+#container{
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background-repeat: no-repeat;
+    background-size: cover;
+    overflow: hidden;
+    transition: all 1s;
+}
+.s_back{
+    background-image: url(../imgs/1.jpg);
+}
+.b_back{
+    background-image: url(../imgs/1.png);
+}
+.lines{
+    stroke-dasharray: 2;
+}
+.texts{
+    font-weight: 600;
+    font-size: 30px;
+    opacity: 0.4;
+}
+#title{
+    height: 105px;
+    position: absolute;
+    top: 0;
+    z-index: 100;
+    display: inline-block;
+    left: 36px;
+    .title-text{
+        color: #fff;
+        line-height: 95px;
+        letter-spacing: 6px;
+        font-size: 52px;
+        text-shadow: 0 0 10px #00d4ff;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .title-small{
+        color: #fff;
+        text-shadow: 0 0 10px #00d4ff;
+        position: relative;
+        top: -13px;
+        font-size: 22px;
+    }
+}
+.boxtext{
+    font-size:14px;
+    fill:#fff;
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles/index.css">
+<link rel="stylesheet" href="../styles/reset.css">
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script type="text/javascript" src="../js/map.js"></script>
+<style>
+    
+</style>
+</head>
+<body>
+    <div id="app">
+        <div id="title"><div class="title-text">网络安全态势感知</div><div class="title-small">Network Security Situation Awareness</div></div>
+        <div id="container" class="s_back"></div>
+    </div>
+<script>
+    var svg,g_group,mapG,attackIcon,circleGroup,projection,styleGroup;
+    function initMap(){
+        let width = document.getElementById('container').clientWidth;
+        let height = document.getElementById('container').clientHeight ;
+        svg = d3.select("#container").append("svg").attr('width',1920).attr('height',1080)
+        projection = d3.geoMercator().fitSize([width/1.4, height / 1.1], mapData);
+        //center() 设定地图的中心位置，[107,31] 指的是经度和纬度。
+        //scale() 设定放大的比例。 
+        
+        let path = d3.geoPath().projection(projection);
+        let color = d3.schemeCategory20;
+        g_group = svg.append("g").attr("transform","translate(417, -49)"); 
+        styleGroup = svg.append('g').attr('class','styleGroup');
+        circleStyle('rgb(255, 78, 135)');
+
+
+        let zoom = d3.zoom().scaleExtent([1, 10]).on("zoom", zoomed);  
+        
+        //点击背景将地图还原
+        g_group.append('rect').attr('width',width).attr('height',height).attr('fill','transparent').on('click',function(d){
+            document.getElementById('container').setAttribute('class','s_back');
+            g_group.transition().duration(750).attr("transform", "translate(417, -49)")
+            d3.selectAll('path').attr('stroke','#009cff').attr('class','').attr('fill','rgba(0, 94, 255, 0.05)')
+        });
+        //绘制地图路径
+        mapG = g_group.append('g');
+        mapG.selectAll("path")
+        .data(mapData.features)
+        .enter()
+        .append("path")
+        .style('cursor','pointer')
+        .attr("stroke-width",1)
+        .attr("fill", function(d,i){
+            return 'rgba(0, 94, 255, 0.05)'
+        })
+        .attr('stroke','#009cff')
+        .attr("d", path )   //使用地理路径生成器
+        .on("click",function(d,i){
+            document.getElementById('container').setAttribute('class','b_back');
+            let x = projection(d.properties.cp)[0];
+            let y = projection(d.properties.cp)[1];
+            g_group.transition().duration(750).attr("transform", "translate(" + width / 2 + "," + height / 2 + ") scale(" + 2 + ") translate(" + -x + "," + -y + ") ")
+            d3.selectAll('path').attr('stroke','#009cff').attr('class','').attr('fill','rgba(0, 94, 255, 0.05)')
+            d3.select(this).attr('stroke-dasharray','(10,10)').attr('stroke','#FFC139').attr('class','lines').attr('fill','rgba(255, 193, 57, 0.25)')
+        })
+        //绘制地图文本
+        let textGrou = mapG.selectAll('text').data(mapData.features).enter().append('text').text(d => {
+            return `${d.properties.name}区`
+        }).attr('fill','#eee')
+        .style('cursor','pointer')
+        .attr('class','texts')
+        .attr('text-anchor','middle')
+        .attr('x',d => {
+            return projection(d.properties.cp)[0]
+        })
+        .attr('y',d => {
+            return projection(d.properties.cp)[1]+20
+        })
+        attackIcon = mapG.append('g').attr('class','data-show')
+        circleGroup = mapG.append('g').attr('class','cicle-show')
+        textGroup = mapG.append('g').attr('class','text-show')
+    }
+    function circleStyle(color){
+        var filterGroup = styleGroup.append('radialGradient').attr('id','circleStyle').attr('cx','50%').attr('cy','50%').attr('r','50%').attr('fx','50%').attr('fy','50%');
+        filterGroup.append('stop').attr('offset','0%').attr('style',`stop-color:${color};stop-opacity: 0`);
+        filterGroup.append('stop').attr('offset','95%').attr('style',`stop-color:${color};stop-opacity: 0.1`);
+        filterGroup.append('stop').attr('offset','100%').attr('style',`stop-color:${color};stop-opacity: 1`);
+    }
+    function zoomed() {  
+        d3.zoomTransform(g_group.node());
+    }  
+    function addAnimate(){
+        var loopCircle = setInterval(()=>{
+            var timeout = '';
+            let i = (Math.random()*9).toString().split('.')[0];
+            let x = projection(mapData.features[i].properties.cp)[0];
+            let y = projection(mapData.features[i].properties.cp)[1];
+            //点图片
+            attackIcon.append('image').attr('xlink:href','../imgs/3.png')
+                .attr('x',x)  
+                .attr('y',y-89)  
+                .attr('id',`img${mapData.features[i].properties.district}`)
+                .attr('width',24)          
+                .attr('height',89) 
+
+            //动画圆圈
+            circleGroup.append('ellipse').attr('cx',d => {
+                return projection(mapData.features[i].properties.cp)[0]
+            }).attr('id',`circle${mapData.features[i].properties.district}`).attr('cy',d => {
+                return projection(mapData.features[i].properties.cp)[1]
+            }).attr('fill',"url(#circleStyle)")
+            .attr('rx',0).attr('ry',0).transition().duration(3000).attr('rx',400).attr('ry',400).style('opacity',0)
+            
+            //文本框
+            var textG = textGroup.append('g').attr('id',`text${mapData.features[i].properties.district}`).attr('transform',"translate("+x+","+y+")");
+            textG.append('image').attr('xlink:href','../imgs/2.png').attr('width',223).attr('height',103)
+            textG.append('text').text('单位：测试单位').attr('x',15).attr('y',30).attr('class','boxtext')
+            textG.append('text').text(`时间：2019-05-28 20:00:00`).attr('x',15).attr('y',55).attr('class','boxtext')
+            textG.append('text').text('类型：测试类型').attr('x',15).attr('y',80).attr('class','boxtext')
+            timeout = setTimeout(() => {
+                d3.select(`#img${mapData.features[i].properties.district}`).remove();
+                d3.select(`#circle${mapData.features[i].properties.district}`).remove();
+                d3.select(`#text${mapData.features[i].properties.district}`).remove();
+            },3000)
+        },3000)
+    }
+    initMap();
+    addAnimate();
+
+    // window.addEventListener('resize',function(){
+    //     svg.attr("width",document.documentElement.clientWidth)
+    //     svg.attr("height",document.documentElement.clientHeight)
+    // })
+
+</script>
+</body>
