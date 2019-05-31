@@ -135,46 +135,72 @@ function initObj(){
                 child.material = new THREE.MeshBasicMaterial({color:'#3775ff'});
             }else{
                 child.material = new THREE.MeshLambertMaterial({color:'#3c9dff'});
-                let loader = new THREE.FontLoader();
-                loader.load('../js/FZLanTingHeiS-UL-GB_Regular.json',font=> {
-                    let textFont = new THREE.TextGeometry(`${child.name.split('-')[0]}`, {
-                        font: font,
-                        size: 25,
-                        height:4,
-                        weight:'bold',
-                        curveSegments: 10,
-                        steps:1,
-                        bevelEnabled:false,
-                        bevelSegments:9,
-                        bevelSize:1
-                    })
-                    textFont.center();
-                    let materials = [
-                        new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } ), // front
-                        new THREE.MeshPhongMaterial( { color: 0xffffff } ) // side
-                    ];
-                    let mesh1 = new THREE.Mesh(textFont, materials);
-                    child.geometry.computeBoundingBox()
-                    let bbox = child.geometry.boundingBox;
-                    var mdlen=bbox.max.x-bbox.min.x;
-                    var mdwid=bbox.max.z-bbox.min.z;
-                    var mdhei=bbox.max.y-bbox.min.y;
-                    var centerpoint=new THREE.Vector3();
-                    var x=bbox.min.x+mdlen/2;
-                    var y=bbox.min.y+mdhei/2;
-                    var z=bbox.min.z+mdwid/2;
-                    child.positionRecord = {x,y,z};
-                    mesh1.position.set(x,y*2.8,z);
-                    nameGroup.add(mesh1);
-                });
+                // var earthGeometry = new THREE.SphereBufferGeometry( 1, 16, 16 );
+                var earthDiv = document.createElement( 'div' );
+				earthDiv.className = 'label';
+				earthDiv.textContent = 'Earth';
+				earthDiv.style.marginTop = '-5em';
+				var earthLabel = new THREE.CSS2DObject( earthDiv );
+				// earthLabel.position.set( 0, EARTH_RADIUS, 0 );
+                // earth.add( earthLabel );
+                child.geometry.computeBoundingBox()
+                let bbox = child.geometry.boundingBox;
+                var mdlen=bbox.max.x-bbox.min.x;
+                var mdwid=bbox.max.z-bbox.min.z;
+                var mdhei=bbox.max.y-bbox.min.y;
+                var centerpoint=new THREE.Vector3();
+                var x=bbox.min.x+mdlen/2;
+                var y=bbox.min.y+mdhei/2;
+                var z=bbox.min.z+mdwid/2;
+                earthLabel.positionRecord = {x,y,z};
+                earthLabel.position.set(x,y*2.8,z);
+                child.add(earthLabel);
+                console.log(child)
+                // let loader = new THREE.FontLoader();
+                // loader.load('../js/FZLanTingHeiS-UL-GB_Regular.json',font=> {
+                //     let textFont = new THREE.TextGeometry(`${child.name.split('-')[0]}`, {
+                //         font: font,
+                //         size: 25,
+                //         height:4,
+                //         weight:'bold',
+                //         curveSegments: 10,
+                //         steps:1,
+                //         bevelEnabled:false,
+                //         bevelSegments:9,
+                //         bevelSize:1
+                //     })
+                //     textFont.center();
+                //     let materials = [
+                //         new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } ), // front
+                //         new THREE.MeshPhongMaterial( { color: 0xffffff } ) // side
+                //     ];
+                //     let mesh1 = new THREE.Mesh(textFont, materials);
+                //     child.geometry.computeBoundingBox()
+                //     let bbox = child.geometry.boundingBox;
+                //     var mdlen=bbox.max.x-bbox.min.x;
+                //     var mdwid=bbox.max.z-bbox.min.z;
+                //     var mdhei=bbox.max.y-bbox.min.y;
+                //     var centerpoint=new THREE.Vector3();
+                //     var x=bbox.min.x+mdlen/2;
+                //     var y=bbox.min.y+mdhei/2;
+                //     var z=bbox.min.z+mdwid/2;
+                //     child.positionRecord = {x,y,z};
+                //     mesh1.position.set(x,y*2.8,z);
+                //     nameGroup.add(mesh1);
+                // });
             }
             child.geometry.computeFaceNormals();
             child.geometry.computeVertexNormals();
         })
+        
         object.position.set(0,0.1,0);
         object.add(nameGroup);
         scene.add(object);
-        console.log(scene)
+        var labelRenderer = new THREE.CSS2DRenderer();
+        labelRenderer.setSize( window.innerWidth, window.innerHeight );
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = 0;
+        document.body.appendChild( labelRenderer.domElement );
     })
 }
 function initClick() {
@@ -886,6 +912,7 @@ function lineIcon(){
 
 
 setTimeout(() => {
+
     let data = scene.children[4].children;
     let p1 = new THREE.Vector3(data[4].positionRecord.x*scale,data[4].positionRecord.y*scale,data[4].positionRecord.z*scale);
     let p2 = new THREE.Vector3(data[13].positionRecord.x*scale,data[13].positionRecord.y*scale,data[13].positionRecord.z*scale);
