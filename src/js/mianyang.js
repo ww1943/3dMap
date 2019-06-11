@@ -1,6 +1,6 @@
 /* 设置画布的高宽 */
 
-var camera, renderer , labelRenderer, controls, mouse, raycaster, meshAttack, footPlane;
+var camera, renderer , labelRenderer, controls, mouse, raycaster, meshAttack, footPlane ,rotation;
 let [width, height] = [window.innerWidth, window.innerHeight];
 var scene = new THREE.Scene();
 var fov = 45
@@ -67,7 +67,7 @@ function makeTextSprite(message, parameters) {
     /* 创建画布 */
     let canvas = document.createElement('canvas');
     let context = canvas.getContext('2d');
-
+    
     /* 字体加粗 */
     context.font = "Bold " + fontsize + "px " + fontface;
 
@@ -83,6 +83,7 @@ function makeTextSprite(message, parameters) {
     /* 字体颜色 */
     context.fillStyle = "#fff";
     context.fillText( message, borderThickness, fontsize);
+   
 
     /* 画布内容用于纹理贴图 */
     let texture = new THREE.Texture(canvas);
@@ -103,7 +104,7 @@ function makeTextSprite(message, parameters) {
 function initCamea() {
     //远交相机
     camera.lookAt(new THREE.Vector3(0, 0, 0));
-    scene.add(camera);
+    // scene.add(camera);
     onWindowResize()
 }
 function initControls() {
@@ -191,8 +192,9 @@ function initClick() {
         if (event.button == 2) {
             console.log('鼠标右键')
         } else {
+            console.log(scene)
             raycaster.setFromCamera(mouse,camera)
-            let intersects = raycaster.intersectObjects(scene.children[4].children);
+            let intersects = raycaster.intersectObjects(scene.children[3].children);
             if(intersects.length>0){
                 intersects.forEach(x =>{
                     if(x.object.name !='次要建筑-023-2' && x.object.name!='马路-0-3'){
@@ -206,7 +208,7 @@ function initClick() {
 
 function draw() {
     requestAnimationFrame( draw );
-    scene.rotation.y += 0.002;
+    scene.rotation.y += 0.001;
     controls.update();
     renderer.render( scene, camera );
     if(labelRenderer){
@@ -254,10 +256,10 @@ function attackAnimation(position) {
     let _this = this
     function animation(node) {
         let num = 0;
-        let scale_num = 0;
+        let scale_num = 10;
         let scale_time = setInterval(() => {
-            let _n = 1 - scale_num * 0.02
-            if (scale_num > 1) {
+            let _n = 1 - scale_num * 0.01
+            if (scale_num > 11) {
                 clearInterval(scale_time)
                 _TIME()
             }
@@ -278,7 +280,7 @@ function attackAnimation(position) {
                         deleteMesh(node)
                     }, 100)
                 }
-            }, 20)
+            }, 80)
         }
 
     }
@@ -294,14 +296,34 @@ function deleteMesh(mesh, state) {
     });
     scene.remove(mesh)
 }
-function lineIcon(src, position) {
+function lineIcon(src, position,status) {
     let loader = new THREE.TextureLoader();
-    var routerName = loader.load('../imgs/4.png');
+    var routerName = loader.load(src);
     let sprMat = new THREE.SpriteMaterial({ map: routerName });
     let spriteText = new THREE.Sprite(sprMat);
-    spriteText.scale.set(15, 15, 1);
+    if(status){
+        spriteText.scale.set(10, 10, 1);
+    }else{
+        spriteText.scale.set(15, 15, 1);
+    }
+    
     spriteText.position.set(position[0], position[1], position[2]);
-    spriteText.params_type = "step"
+    spriteText.params_type = "step";
+    // if(status){
+    //     let canvas = document.createElement('canvas');
+    //     let context = canvas.getContext('2d');
+    //     context.fillStyle = "#fff";
+    //     context.fillText( 'message', 1, 16);
+    //     /* 画布内容用于纹理贴图 */
+    //     let texture = new THREE.Texture(canvas);
+    //     texture.needsUpdate = true;
+    
+    //     let spriteMaterial = new THREE.SpriteMaterial({ map: texture } );
+    //     let sprite = new THREE.Sprite( spriteMaterial );
+    //     /* 缩放比例 */
+    //     sprite.scale.set(256,128,0);
+    //     spriteText.add(sprite)
+    // }
     return spriteText
 }
 
@@ -332,6 +354,7 @@ function selfAddLine(src,dst){
     let cinum = 30;
     let i = 0;
     let vector = curve.getPoints(30);
+    console.log(vector)
     var geometry = new THREE.Geometry();
     geometry.vertices.push(new THREE.Vector3(vector[i].x,vector[i].y,vector[i].z));
     var line = new MeshLine();
@@ -339,7 +362,7 @@ function selfAddLine(src,dst){
     var material = new MeshLineMaterial(linkMesh);
     var mesh = new THREE.Mesh(line.geometry,material);
     mesh.name='飞线';
-    var Icon = lineIcon(vector[i].x,vector[i].y,vector[i].z);
+    var Icon = lineIcon('../imgs/4.png',[vector[i].x,vector[i].y,vector[i].z]);
     Icon.name='线头';
     scene.add(Icon);
     scene.add(mesh);
@@ -354,12 +377,19 @@ function selfAddLine(src,dst){
         lines.setGeometry( geometry );
         material = new MeshLineMaterial(linkMesh);
         var linesMesh = new THREE.Mesh(lines.geometry,material);
-        console.log(scene.children)
-        var animateIcomn = scene.children[5];
+        var animateIcomn = scene.children[4];
         animateIcomn.position.set(vector[i].x,vector[i].y,vector[i].z)
+        // animateIcomn.position.x = vector[i].x;
+        // animateIcomn.position.y = vector[i].y;
+        // animateIcomn.position.z = vector[i].z;
         scene.add(linesMesh)
-        scene.remove(scene.children[6])
+        setTimeout(() => {
+            scene.remove(scene.children[5])
+            var test = lineIcon('../imgs/6.png',[_center[0], _center[1]*2+2, _center[2]],true);
+            scene.add(test)
+        },300)
     },30)
+    
 
 }
 
@@ -367,7 +397,7 @@ function selfAddLine(src,dst){
 
 setTimeout(() => {
     console.log(scene)
-    let data = scene.children[4].children;
+    let data = scene.children[3].children;
     let p1 = new THREE.Vector3(data[4].positionRecord.x*scale,data[4].positionRecord.y*scale,data[4].positionRecord.z*scale);
     let p2 = new THREE.Vector3(data[13].positionRecord.x*scale,data[13].positionRecord.y*scale,data[13].positionRecord.z*scale);
     setTimeout(()=>{
