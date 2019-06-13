@@ -1,9 +1,9 @@
 var earthData = [
-    {name:'d-hexinluyouqi',position:{x:0,y:0,z:0}},
-    {name:'d-hexinluyouqi',position:{x:-100,y:0,z:0}},
-    {name:'d-hexinluyouqi',position:{x:100,y:0,z:0}},
-    {name:'d-hexinluyouqi',position:{x:0,y:0,z:-60}},
-    {name:'d-hexinluyouqi',position:{x:0,y:0,z:60}},
+    {name:'d-hexinluyouqi',position:{x:0,y:0,z:0},scale:0.2},
+    {name:'d-hexinluyouqi',position:{x:-100,y:0,z:0},scale:0.1},
+    {name:'d-hexinluyouqi',position:{x:100,y:0,z:0},scale:0.1},
+    {name:'d-hexinluyouqi',position:{x:0,y:0,z:-60},scale:0.1},
+    {name:'d-hexinluyouqi',position:{x:0,y:0,z:60},scale:0.1},
 ]
 var lGroupData = [
     {name:'d-fuwuqi1',position:{x:-230,y:0,z:-30}},
@@ -53,3 +53,7 @@ var playerDataB = [
     {playerName:'CNSS'},
     {playerName:'ROIS'},
 ]
+var replayAttack = [
+    [{x:0,y:0,z:60},{x:0,y:0,z:0},{x:-100,y:0,z:0},{x:-230,y:0,z:-30}],
+    [{x:0,y:0,z:-60},{x:0,y:0,z:0},{x:100,y:0,z:0},{x:230,y:0,z:30}],
+];

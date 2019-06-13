@@ -1,5 +1,5 @@
-var scene , camera , renderer , light;
-var fov = 45
+var scene , camera , renderer , light , sourcePosition ,nextPosition;
+var fov = 45 ,lineGroup = new THREE.Group();
 function load(){
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(fov,window.innerWidth/window.innerHeight,1,1000);
@@ -30,7 +30,9 @@ function initPlayer(){
     playerDataB.forEach((d,id) => {
         PlayerB(d,-265+id*38,-200)
     })
+    scene.add(lineGroup)
 }
+//选手区内容
 function PlayerA(data,x,z){
     let group = new THREE.Group();
 
@@ -67,6 +69,7 @@ function PlayerA(data,x,z){
             loader.load(`../js/obj/model/guanjunzhuji.obj`,object => {
                 object.scale.set(0.06,0.06,0.06)
                 object.position.set(-13+(i*9),0,-10);
+                object.name = '主机'
                 let lineMaterial = new THREE.LineBasicMaterial({color:0x214f79});
                 let geometry = new THREE.Geometry();
                 geometry.vertices.push(new THREE.Vector3(0,0,-40))
@@ -93,12 +96,13 @@ function PlayerA(data,x,z){
     group.types ='player';
     group.position.set(x,0.1,z);
     scene.add(group)
+    addPlayLine([0,0,60],[x,0.1,160])
 }
 function PlayerB(data,x,z){
     let group = new THREE.Group();
 
     //背景贴图
-    let texture = new THREE.TextureLoader().load('../imgs/10.png');
+    let texture = new THREE.TextureLoader().load('../imgs/9.png');
     let materials = new THREE.MeshBasicMaterial({map:texture});
     // let materials = new THREE.MeshBasicMaterial({color:0xffffff});
     let geometry  = new THREE.PlaneGeometry(38,100,0);
@@ -130,6 +134,7 @@ function PlayerB(data,x,z){
             loader.load(`../js/obj/model/guanjunzhuji.obj`,object => {
                 object.scale.set(0.06,0.06,0.06)
                 object.position.set(-13+(i*9),0,10);
+                object.name = '主机'
                 let lineMaterial = new THREE.LineBasicMaterial({color:0x214f79});
                 let geometry = new THREE.Geometry();
                 geometry.vertices.push(new THREE.Vector3(0,0,40))
@@ -156,6 +161,17 @@ function PlayerB(data,x,z){
     group.types ='player';
     group.position.set(x,0.1,z);
     scene.add(group)
+    addPlayLine([0,0,-60],[x,0.1,-160])
+}
+
+function addPlayLine(source,target){
+    let lineMaterial = new THREE.LineBasicMaterial({color:0x214f79});
+    let geometry = new THREE.Geometry();
+    geometry.vertices.push(new THREE.Vector3(source[0],source[1],source[2]))
+    // geometry.vertices.push(new THREE.Vector3((i*9-13)/2, 0 ,(-40-10)/2))
+    geometry.vertices.push(new THREE.Vector3(target[0],target[1],target[2]))
+    let line = new THREE.Line( geometry, lineMaterial );
+    lineGroup.add(line)
 }
 
 function initClick() {
@@ -163,7 +179,7 @@ function initClick() {
     let raycaster = new THREE.Raycaster();
     let mouse = new THREE.Vector2();
     document.addEventListener('mousedown', onDocumentMouseDown, false);
-    document.addEventListener('mouseover', onDocumentMouseOver, false);
+    document.addEventListener('mousemove', onDocumentMouseMove, false);
 
     function  getIntersects(event){
         event.preventDefault();
@@ -194,6 +210,12 @@ function initClick() {
                     scene.children.forEach(y => {
                         if(y.types == 'player'){
                             if(y.name == x.object.name){
+                                console.log(y)
+                                document.querySelector('.threat_list').style.display = 'block';
+                                let child =  y.children[3].children[0];
+                                let child1 =  y.children[10].children[0];
+                                sourcePosition = child.getWorldPosition();
+                                nextPosition = child1.getWorldPosition();
                                 y.children[0].material.transparent = false;
                                 y.children[0].material.opacity = 1;
                             }else{
@@ -206,9 +228,30 @@ function initClick() {
             })
         }
     }
-    function onDocumentMouseOver(event) {
-        console.log(event)
+    function onDocumentMouseMove(event) {
+        let intersects = getIntersects(event);
+        if(intersects.length>0){
+            intersects.forEach(x =>{
+                if(x.object.types =='clickMesh'){
+                    scene.children.forEach(y => {
+                        if(y.types == 'player'){
+                            if(y.name == x.object.name){
+                                document.getElementById('tooltip').innerHTML = y.name;
+                                document.getElementById('tooltip').style.left = `${event.offsetX+20}px`;
+                                document.getElementById('tooltip').style.top = `${event.offsetY}px`;
+                                document.getElementById('tooltip').style.display = 'block';
+                            }
+                        }
+                    })
+                }
+            })
+        }else{
+            setTimeout(() => {
+                document.getElementById('tooltip').style.display = 'none';
+            },100)
+        }
     }
+    
 }
 
 function initLight(){
@@ -238,11 +281,7 @@ function initHelper(){
     var axesHelper = new THREE.AxesHelper( 200 );
     scene.add( axesHelper );
 }
-function initObj(){
-    earthData.forEach(x => {
-        loadObj(x.name,x.position);
-    })
-}
+
 //黑盒测试区
 function leftGroup(){
     var group = new THREE.Group();
@@ -253,8 +292,8 @@ function leftGroup(){
     plane.position.set(190,0,0);
     plane.rotation.x = -Math.PI/2;
     group.add(plane)
-    groupAdd(group,lGroupData);
     scene.add(group);
+    groupAdd(group,lGroupData,[-100,0,0]);
 }
 //白盒测试区
 function rightGroup(){
@@ -266,15 +305,15 @@ function rightGroup(){
     plane.position.set(-190,0,0);
     plane.rotation.x = -Math.PI/2;
     group.add(plane)
-    groupAdd(group,rGroupData);
     scene.add(group);
+    groupAdd(group,rGroupData,[100,0,0]);
 }
-function groupAdd(group,data){
+function groupAdd(group,data,source){
     data.forEach(x => {
+        addPlayLine(source,[x.position.x,x.position.y,x.position.z])
         let mtlLoader = new THREE.MTLLoader();
         let loader = new THREE.OBJLoader();
         mtlLoader.load( `../js/obj/model/${x.name}.mtl`, function(materials) {
-            console.log(materials)
             materials.preload();
             loader.setMaterials(materials);
             loader.load(`../js/obj/model/${x.name}.obj`,object => {
@@ -291,7 +330,7 @@ function groupAdd(group,data){
         })
     })
 }
-//选手区
+//选手区面板
 function playerGroup(){
     var group = new THREE.Group();
     //上选手区
@@ -313,21 +352,293 @@ function playerGroup(){
     group.add(plane2)
     scene.add(group);
 }
-
-function loadObj(name,position){
+//正中心5个服务器
+function initObj(){
+    earthData.forEach((x,i) => {
+        loadObj(x.name,x.position,x.scale);
+        if(i!=0){
+            let s = earthData[0].position;
+            let e = earthData[1].position;
+            addPlayLine([s.x,s.y,s.z],[e.x,e.y,e.z])
+        }
+    })
+}
+function loadObj(name,position,scale){
     let mtlLoader = new THREE.MTLLoader();
     let loader = new THREE.OBJLoader();
     mtlLoader.load( `../js/obj/model/${name}.mtl`, function(materials) {
         materials.preload();
         loader.setMaterials(materials);
         loader.load(`../js/obj/model/${name}.obj`,object => {
-            object.scale.set(0.2,0.2,0.2)
+            object.scale.set(scale,scale,scale)
             object.position.set(position.x,position.y,position.z);
             scene.add(object)
         })
     })
     
 }
+function initThreatClick(){
+    let i = parseInt(Math.random()*2);
+    let data = [sourcePosition,nextPosition,...replayAttack[i]]
+    addLine(data)
+    let start = new THREE.Vector3(-200,0,0)
+    let end = new THREE.Vector3(200,0,0)
+    // addCurve({x:0,y:0,z:0},{x:200,y:0,z:0})
+    addCurve(start,end)
+}
+function getVCenter(v1,v2){//求出两个点之间的中点
+    let v = v1.add(v2);
+    return v.divideScalar(2);
+}
+function getLenVcetor(v1, v2, len) {
+    let v1v2Len = v1.distanceTo(v2);
+    return v1.lerp(v2, len / v1v2Len);
+}
+function addCurve(src,dist){
+    
+    let start = src;
+    let end = dist;
+    let angle = start.angleTo(end)*270;
+    let aLen = angle *50,hLen = angle*angle*120;
+    let p0 = new THREE.Vector3(0,0,0);
+    let rayLine  = new THREE.Ray(p0,getVCenter(start.clone(), end.clone()));
+    let vtop = rayLine.at(hLen / rayLine.at(1).distanceTo(p0));
+    console.log(rayLine.at(1).distanceTo(p0))
+    let v1 = getLenVcetor(start.clone(),vtop,aLen);
+    let v2 = getLenVcetor(end.clone(),vtop,aLen);
+    let curve = new THREE.CubicBezierCurve3(start, v1,v2,end);
+    console.log(curve)
+    let cinum = 30;
+    let i = 0;
+    let vector = curve.getPoints(30);
+    console.log(vector)
+
+    var geometry = new THREE.Geometry();
+    for (let i = 0; i < cinum; i++) {
+        geometry.vertices.push(new THREE.Vector3(...vector[0]));
+    }
+    //线条
+    var line = new MeshLine();
+    line.setGeometry( geometry );
+    var material = new MeshLineMaterial({
+        color: new THREE.Color("#91FFAA"),
+        opacity: 1,
+        sizeAttenuation: 1,
+        lineWidth:1,
+        near: 10,
+        far: 100000,
+    });
+    var mesh = new THREE.Mesh(line.geometry,material);
+    scene.add(mesh)
+
+    let n = 0;
+    var interval = (n) => {
+        if (n >= cinum) {
+            let timeNumber = 1500; 
+            let t = setInterval(() => {
+                n--;
+                if (n < 0) {
+                    deleteMesh(mesh)
+                    clearInterval(t)
+                } else {
+                    line.advance(vector[cinum - 1])
+                }
+            }, timeNumber)
+            return
+        } else {
+            n++
+            setTimeout(() => {
+                line.advance(vector[parseInt(n)])
+                interval(n)
+            }, 1500 / cinum);
+        }
+    }
+    interval(n)
+}
+
+function addLine(arr){
+    let p = (n) => {
+        return parseFloat(n)
+    }
+    let vector = [];
+    arr.forEach((d,i) => {
+        if(i == arr.length-1){
+            return;
+        }
+        let _src = {
+            x: p(d.x),
+            y: p(d.y)+0.1,
+            z: p(d.z)
+        }
+        let _dst = {
+            x: p(arr[i+1].x),
+            y: p(arr[i+1].y)+0.1,
+            z: p(arr[i+1].z)
+        }
+        let _center = [
+            (_src.x + _dst.x) / 2,
+            (_src.y + _dst.y) / 2,
+            (_src.z + _dst.z) / 2
+        ]
+        var curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(_src.x, _src.y, _src.z),
+            new THREE.Vector3(_center[0], _center[1], _center[2]),
+            new THREE.Vector3(_dst.x, _dst.y, _dst.z),
+        ]);
+        let point = curve.getPoints(30);
+        vector.push(...point);
+    })
+    let cinum = arr.length*30;
+    let i = 0;
+    
+    var geometry = new THREE.Geometry();
+    for (let i = 0; i < cinum; i++) {
+        geometry.vertices.push(new THREE.Vector3(vector[0].x,vector[0].y,vector[0].z));
+    }
+    
+    //线条
+    var line = new MeshLine();
+    line.setGeometry( geometry );
+    var material = new MeshLineMaterial({
+        color: new THREE.Color("#91FFAA"),
+        opacity: 1,
+        sizeAttenuation: 1,
+        lineWidth:1,
+        near: 10,
+        far: 100000,
+    });
+    var mesh = new THREE.Mesh(line.geometry,material);
+    scene.add(mesh)
+
+    //线头
+    var Icon = lineIcon('../imgs/4.png',[vector[i].x,vector[i].y,vector[i].z]);
+    Icon.name='线头';
+    scene.add(Icon);
+
+    let n = 0;
+    console.log(n)
+    var interval = (n) => {
+        if (n >= cinum) {
+            
+            setTimeout(() => {
+                deleteMesh(Icon)
+                deleteMesh(mesh)
+            },1000)
+            // let timeNumber = 1500; 
+            // let t = setInterval(() => {
+            //     n--;
+            //     if (n < 0) {
+                    
+            //         clearInterval(t)
+            //     } else {
+            //         // line.advance(vector[cinum - 1])
+            //     }
+            // }, timeNumber)
+            return
+        } else {
+            n++
+            setTimeout(() => {
+                if(vector[parseInt(n)]){
+                    line.advance(vector[parseInt(n)])
+                    Icon.position.set(vector[parseInt(n)].x, vector[parseInt(n)].y, vector[parseInt(n)].z)
+                }
+                interval(n)
+            }, 1500 / cinum);
+        }
+    }
+    interval(n)
+}
+function addLines(src,dst){
+    let p = (n) => {
+        return parseFloat(n)
+    }
+    let _src = {
+        x: p(src[0]),
+        y: p(src[1]),
+        z: p(src[2])
+    }
+    let _dst = {
+        x: p(dst[0]),
+        y: p(dst[1]),
+        z: p(dst[2])
+    }
+    let _center = [
+        (_src.x + _dst.x) / 2,
+        (_src.y + _dst.y) / 2,
+        (_src.z + _dst.z) / 2
+    ]
+    var curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(_src.x, _src.y, _src.z),
+        new THREE.Vector3(_center[0], _center[1], _center[2]),
+        new THREE.Vector3(_dst.x, _dst.y, _dst.z),
+    ]);
+    let cinum = 30;
+    let i = 0;
+    let vector = curve.getPoints(30);
+    var geometry = new THREE.Geometry();
+    for (let i = 0; i < cinum; i++) {
+        geometry.vertices.push(new THREE.Vector3(...src));
+    }
+    //线条
+    var line = new MeshLine();
+    line.setGeometry( geometry );
+    var material = new MeshLineMaterial(linkMesh);
+    var mesh = new THREE.Mesh(line.geometry,material);
+    scene.add(mesh)
+    //
+    var Icon = lineIcon('../imgs/4.png',[vector[i].x,vector[i].y,vector[i].z]);
+    Icon.name='线头';
+    scene.add(Icon);
+
+    let n = 0;
+    var interval = (n) => {
+        if (n >= cinum) {
+            deleteMesh(Icon)
+            let timeNumber = 1500; 
+            let t = setInterval(() => {
+                n--;
+                if (n < 0) {
+                    deleteMesh(mesh)
+                    clearInterval(t)
+                } else {
+                    line.advance(vector[cinum - 1])
+                }
+            }, timeNumber)
+            return
+        } else {
+            n++
+            setTimeout(() => {
+                line.advance(vector[parseInt(n)])
+                Icon.position.set(vector[parseInt(n)].x, vector[parseInt(n)].y, vector[parseInt(n)].z)
+                interval(n)
+            }, 1500 / cinum);
+        }
+    }
+    interval(n)
+}
+function deleteMesh(mesh, state) {
+    mesh.traverse(function (item) {
+        if (item instanceof THREE.Mesh) {
+            item.geometry.dispose(); //删除几何体
+            if (item.material) {
+                item.material.dispose(); //删除材质
+            }
+        }
+    });
+    scene.remove(mesh)
+}
+function lineIcon(src, position) {
+    let loader = new THREE.TextureLoader();
+    var routerName = loader.load(src);
+    let sprMat = new THREE.SpriteMaterial({ map: routerName });
+    let spriteText = new THREE.Sprite(sprMat);
+    spriteText.scale.set(20, 20, 1);
+    spriteText.position.set(position[0], position[1], position[2]);
+    spriteText.params_type = "step";
+    return spriteText
+}
+
+  
 function animate(){
     requestAnimationFrame(animate);
     renderer.render( scene, camera );
